@@ -1,9 +1,8 @@
-#include "stdafx.h"
-#include "EventQueue.h"
 #include <mutex>
 #include <iostream>
 #include <chrono>
-#include "Promise.h"
+#include "EventQueue.hpp"
+#include "Promise.hpp"
 
 using namespace ancpp;
 using namespace std::chrono_literals;
@@ -76,7 +75,7 @@ void EventQueue::launchExternal(std::shared_ptr<ancpp::IPromise> promise, std::f
 std::shared_ptr<Promise<int>> EventQueue::launchExternal(std::function<void()> callable)
 {
   std::lock_guard<std::recursive_mutex> lg(futures_mutex);
-  auto promise = std::make_shared<ancpp::Promise<int>>();
+  auto promise = Promise<int>::create();
   auto future_pair = std::make_pair(promise, std::async(std::launch::async, [=]() {
     callable();
     promise->resolve(0);

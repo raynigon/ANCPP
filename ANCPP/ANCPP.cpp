@@ -5,13 +5,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "Files.h"
 #include <future>
 #include <thread>
 #include <chrono>
-#include "Promise.h"
 #include <memory>
-#include "TimeTrigger.h"
+#include "Files/Files.hpp"
+#include "Core/Promise.hpp"
+#include "Timing/TimeTrigger.hpp"
 
 using namespace ancpp;
 using namespace std::chrono_literals;
@@ -50,7 +50,7 @@ int main()
   tt.destroyTimer(timerId);
   std::wcout << L" - - - Destroyed Timer - - - " << std::endl;
 
-  std::this_thread::sleep_for(25000ms);
+  std::this_thread::sleep_for(2500ms);
   EventQueue::getInstance().exit();
   return 0;
 }

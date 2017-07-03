@@ -1,10 +1,9 @@
-#include "stdafx.h"
-#include "TimeTrigger.h"
 #include <future>
 #include <thread>
 #include <unordered_set>
-#include "EventQueue.h"
 #include <vector>
+#include "Timing/TimeTrigger.hpp"
+#include "Core/EventQueue.hpp"
 
 using namespace ancpp;
 

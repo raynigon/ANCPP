@@ -1,5 +1,4 @@
-#include "stdafx.h"
-#include "Files.h"
+#include "Files.hpp"
 #include <vector>
 #include <iterator>
 #include <fstream>
@@ -39,7 +38,7 @@ Files::~Files()
 
 std::shared_ptr<Promise<std::vector<std::wstring>>> Files::readAllLines(const std::wstring& path)
 {
-  auto pPromise = std::make_shared<Promise<std::vector<std::wstring>>>();
+  auto pPromise = Promise<std::vector<std::wstring>>::create();
   EventQueue::getInstance().launchExternal(std::dynamic_pointer_cast<ancpp::IPromise>(pPromise), [=]() {
     std::vector<std::wstring> data;
     std::wifstream fis(path);
