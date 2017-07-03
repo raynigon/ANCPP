@@ -11,7 +11,6 @@ namespace ancpp {
   class TimeTrigger
   {
   private:
-    static bool exists;
     std::mutex timerIdsMutex;
     std::unordered_set<long> timerIds;
     std::unordered_set<std::shared_ptr<IPromise>> promises;

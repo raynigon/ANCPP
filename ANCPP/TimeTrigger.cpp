@@ -8,19 +8,15 @@
 
 using namespace ancpp;
 
-bool TimeTrigger::exists = false;
-
 
 TimeTrigger::TimeTrigger()
 {
-  exists = true;
 }
 
 
 TimeTrigger::~TimeTrigger()
 {
-  exists = false;
-  /*{
+  {
     std::lock_guard<std::mutex> lg(timerIdsMutex);
     timerIds.clear();
   }
@@ -37,19 +33,20 @@ TimeTrigger::~TimeTrigger()
   for (auto& futureFct : futures) 
   {
     futureFct.wait();
-  }*/
+  }
 }
 
 long TimeTrigger::onTimer(std::function<void()> callable, long timeout)
 {
   long triggerId = createTriggerId();
-  EventQueue::getInstance().launchExternal([&,callable,timeout,triggerId]() {
+  auto promisePtr = EventQueue::getInstance().launchExternal([&,callable,timeout,triggerId]() {
     while(isActive(triggerId)){
       std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
       //Implement a condition variable which is notified if the Time Trigger is killed
       EventQueue::getInstance().push(callable);
     }
   });
+  promises.insert(promisePtr);
   return triggerId;
 }
 
@@ -64,8 +61,6 @@ void TimeTrigger::destroyTimer(long timerId)
 
 bool TimeTrigger::isActive(long triggerId)
 {
-  if (!exists)
-    return false;
   std::lock_guard<std::mutex> lg(timerIdsMutex);
   return timerIds.find(triggerId)!=timerIds.end();
 }

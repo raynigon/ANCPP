@@ -14,23 +14,23 @@
 #include "TimeTrigger.h"
 
 using namespace ancpp;
-
+using namespace std::chrono_literals;
 void start(int i) 
 {
-  //std::cout << "Thread id:" << std::this_thread::get_id() << std::endl;
-  std::vector<std::shared_ptr<ancpp::Promise<std::vector<std::wstring>>>> promises;
   auto promise = ancpp::Files::readAllLines(i%2==0 ? L"ReadMe.txt" : L"Troll.txt");
   promise->onResolve([=](std::vector<std::wstring> data)
   {
-    //std::cout << "Thread id:" << std::this_thread::get_id() << std::endl;
     std::wcout << L"Read File " << i << std::endl;
   });
-  promises.push_back(promise);
+  promise->onReject([=](const std::wstring& reason) 
+  {
+    std::wcout << L"Error: " << reason << std::endl;
+  });
+  std::this_thread::sleep_for(500ms);
 }
-
+ 
 int main()
 {
-  using namespace std::chrono_literals;
   for (int i = 0; i < 10; i++)
   {
     EventQueue::getInstance().push([=]()
@@ -38,12 +38,19 @@ int main()
       start(i);
     });
   }
+
+  
   TimeTrigger tt;
-  tt.onTimer([]() {
+  long timerId = tt.onTimer([]() {
     std::cout << "Every 1000ms this text will show up" << std::endl;
   }, 1000);
-  std::wcout << L" - - - End of Main - - - " << std::endl;
+
+  std::wcout << L" - - - Started all Events - - - " << std::endl;
   std::this_thread::sleep_for(10000ms);
+  tt.destroyTimer(timerId);
+  std::wcout << L" - - - Destroyed Timer - - - " << std::endl;
+
+  std::this_thread::sleep_for(25000ms);
   EventQueue::getInstance().exit();
   return 0;
 }

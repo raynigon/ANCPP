@@ -45,8 +45,7 @@ std::shared_ptr<Promise<std::vector<std::wstring>>> Files::readAllLines(const st
     std::wifstream fis(path);
     if (!fis) 
     {
-      std::exception e("File not found");
-      pPromise->reject(e);
+      pPromise->reject(L"Unable to open File");
     }
     std::copy(std::istream_iterator<Line, wchar_t>(fis),
       std::istream_iterator<Line, wchar_t>(),

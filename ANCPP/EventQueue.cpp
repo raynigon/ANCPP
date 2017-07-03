@@ -58,7 +58,18 @@ void EventQueue::push(std::function<void()> callable)
 void EventQueue::launchExternal(std::shared_ptr<ancpp::IPromise> promise, std::function<void()> callable)
 {
   std::lock_guard<std::recursive_mutex> lg(futures_mutex);
-  auto future_pair = std::make_pair(promise, std::async(std::launch::async, callable));
+  auto future_pair = std::make_pair(promise, std::async(std::launch::async, [=]() 
+  { 
+    try
+    {
+      callable();
+    }
+    catch (std::exception& e) 
+    {
+      std::string s(e.what());
+      promise->reject(std::wstring(s.begin(), s.end()));
+    }
+  }));
   futures.emplace_back(std::move(future_pair));
 }
 
@@ -105,8 +116,11 @@ void ancpp::EventQueue::handleEvent()
 void ancpp::EventQueue::cleanUpFutures()
 {
   std::lock_guard<std::recursive_mutex> lg(futures_mutex);
-  auto it = std::remove_if(futures.begin(), futures.end(), [](std::pair<std::shared_ptr<IPromise>, std::future<void>>& dataPair) {
-    return dataPair.first->isResolved() && is_ready(dataPair.second);
+  auto it = std::remove_if(futures.begin(), futures.end(), [](std::pair<std::shared_ptr<IPromise>, std::future<void>>& dataPair)
+  {
+    bool ready = is_ready(dataPair.second);
+    bool resolved = dataPair.first->isResolved();
+    return (ready && resolved);
   });
   if (it != futures.end())
   {
