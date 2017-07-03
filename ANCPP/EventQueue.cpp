@@ -62,6 +62,18 @@ void EventQueue::launchExternal(std::shared_ptr<ancpp::IPromise> promise, std::f
   futures.emplace_back(std::move(future_pair));
 }
 
+std::shared_ptr<Promise<int>> EventQueue::launchExternal(std::function<void()> callable)
+{
+  std::lock_guard<std::recursive_mutex> lg(futures_mutex);
+  auto promise = std::make_shared<ancpp::Promise<int>>();
+  auto future_pair = std::make_pair(promise, std::async(std::launch::async, [=]() {
+    callable();
+    promise->resolve(0);
+  }));
+  futures.emplace_back(std::move(future_pair));
+  return promise;
+}
+
 void ancpp::EventQueue::waitForEvent()
 {
   try{

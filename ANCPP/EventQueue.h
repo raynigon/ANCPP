@@ -7,9 +7,12 @@
 
 namespace ancpp{
   class IPromise;
+  template<typename T>
+  class Promise;
 
   class EventQueue
   {
+    friend class TimeTrigger;
   public:
     static const std::chrono::milliseconds QUEUE_TIMEOUT;
   private:
@@ -41,6 +44,7 @@ namespace ancpp{
     void exit();
     void push(std::function<void()> callable);
     void launchExternal(std::shared_ptr<IPromise> promise, std::function<void()> callable);
+    std::shared_ptr<ancpp::Promise<int>> launchExternal(std::function<void()> callable);
   };
 
 }

@@ -2,26 +2,52 @@
 #include "TimeTrigger.h"
 #include <future>
 #include <thread>
+#include <unordered_set>
 #include "EventQueue.h"
+#include <vector>
+
+using namespace ancpp;
+
+bool TimeTrigger::exists = false;
 
 
 TimeTrigger::TimeTrigger()
 {
+  exists = true;
 }
 
 
 TimeTrigger::~TimeTrigger()
 {
-  active = false;
+  exists = false;
+  /*{
+    std::lock_guard<std::mutex> lg(timerIdsMutex);
+    timerIds.clear();
+  }
+  // TODO: Caution some stuff could still running here, wait until its finished
+  std::vector<std::shared_future<void>> futures;
+  {
+    std::lock_guard<std::recursive_mutex> lg(EventQueue::getInstance().futures_mutex);
+    for (auto& futurePair : EventQueue::getInstance().futures)
+    {
+      if (promises.find(futurePair.first) != promises.end())
+        futures.push_back(futurePair.second.share());
+    }
+  }
+  for (auto& futureFct : futures) 
+  {
+    futureFct.wait();
+  }*/
 }
 
 long TimeTrigger::onTimer(std::function<void()> callable, long timeout)
 {
   long triggerId = createTriggerId();
-  EventQueue::launchExternal([&,callable,timeout,triggerId]() {
+  EventQueue::getInstance().launchExternal([&,callable,timeout,triggerId]() {
     while(isActive(triggerId)){
       std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
-      ancpp::EventQueue::getInstance().push(callable);
+      //Implement a condition variable which is notified if the Time Trigger is killed
+      EventQueue::getInstance().push(callable);
     }
   });
   return triggerId;
@@ -30,7 +56,7 @@ long TimeTrigger::onTimer(std::function<void()> callable, long timeout)
 void TimeTrigger::destroyTimer(long timerId)
 {
   std::lock_guard<std::mutex> lg(timerIdsMutex);
-  auto it = timerIds.find(triggerId);
+  auto it = timerIds.find(timerId);
   if (it == timerIds.end())
     return;
   timerIds.erase(it);
@@ -38,6 +64,8 @@ void TimeTrigger::destroyTimer(long timerId)
 
 bool TimeTrigger::isActive(long triggerId)
 {
+  if (!exists)
+    return false;
   std::lock_guard<std::mutex> lg(timerIdsMutex);
   return timerIds.find(triggerId)!=timerIds.end();
 }
