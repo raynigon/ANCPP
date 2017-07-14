@@ -7,6 +7,17 @@
 
 namespace ancpp
 {
+
+  class IPromise;
+
+  template<typename T>
+  class Promise;
+
+  using IPromisePtr = std::shared_ptr<IPromise>;
+
+  template<typename T>
+  using PromisePtr = std::shared_ptr < Promise<T>>;
+
   namespace helpers 
   {
     template<typename ResultType>
@@ -30,7 +41,7 @@ namespace ancpp
     virtual void resolve(const ResultType& result) = 0;
     virtual void onResolve(helpers::ResolveFct<ResultType> fct) = 0;
   public:
-    static std::shared_ptr<Promise<ResultType>> create();
+    static PromisePtr<ResultType> create();
   };
 }
 
@@ -38,7 +49,7 @@ namespace ancpp
 
 
 template<typename ResultType>
-std::shared_ptr<ancpp::Promise<ResultType>> ancpp::Promise<ResultType>::create()
+ancpp::PromisePtr<ResultType> ancpp::Promise<ResultType>::create()
 {
   return std::dynamic_pointer_cast<ancpp::Promise<ResultType>>(std::make_shared<ancpp::core::PromiseImpl<ResultType>>());
 }

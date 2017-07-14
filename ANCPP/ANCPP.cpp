@@ -12,9 +12,11 @@
 #include "Files/Files.hpp"
 #include "Core/Promise.hpp"
 #include "Timing/TimeTrigger.hpp"
+#include "XML/AncppXml.hpp"
 
 using namespace ancpp;
 using namespace std::chrono_literals;
+
 void start(int i) 
 {
   auto promise = ancpp::Files::readAllLines(i%2==0 ? L"ReadMe.txt" : L"Troll.txt");
@@ -24,11 +26,22 @@ void start(int i)
   });
   promise->onReject([=](const std::wstring& reason) 
   {
-    std::wcout << L"Error: " << reason << std::endl;
+    std::wcerr << L"Error: " << reason << std::endl;
   });
-  std::this_thread::sleep_for(500ms);
 }
- 
+
+void readXml() 
+{
+  auto promisePtr = ancpp::XmlHandler::readXmlFromFile(L"Test.xml");
+  promisePtr->onResolve([](ancpp::XMLDocumentPtr doc) {
+    std::wcout << L"XML Text:" << std::endl;
+    std::cout << doc->FirstChildElement("PLAY")->FirstChildElement("TITLE")->GetText() << std::endl;
+  });
+  promisePtr->onReject([](const std::wstring& reason) {
+    std::wcerr << L"XML-Error: " << reason << std::endl;
+  });
+}
+
 int main()
 {
   for (int i = 0; i < 10; i++)
@@ -39,6 +52,7 @@ int main()
     });
   }
 
+  EventQueue::getInstance().push(readXml);
   
   TimeTrigger tt;
   long timerId = tt.onTimer([]() {
